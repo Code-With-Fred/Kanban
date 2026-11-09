@@ -11,6 +11,7 @@ import { ProjectSelect } from "@/components/common/project-select";
 import { WorkLogItem } from "@/components/worklog/WorkLogItem";
 import { WorkLogFields, emptyDraft, type WorkLogDraft } from "@/components/forms/WorkLogFormDialog";
 import { SummaryPanel } from "@/components/reports/SummaryPanel";
+import { DetectedWork } from "@/components/tracking/DetectedWork";
 import { useDataset, useSettings, useToday } from "@/hooks/data";
 import { addDays, fmtLong, relativeDay, startOfWeek } from "@/lib/dates";
 import { createWorkLog } from "@/lib/repo";
@@ -126,6 +127,8 @@ export default function WorkLogPage() {
   return (
     <div className="page space-y-6">
       <PageHeader icon={NotebookPen} title="Daily Work Log" description="Record progress in seconds. Your reports are written from these entries." />
+
+      <DetectedWork />
 
       <div className="grid gap-4 lg:grid-cols-5">
         {/* Quick entry */}

@@ -23,6 +23,7 @@ npm install
 npm run dev        # http://localhost:5173
 npm run build      # type-checks, then builds a static bundle into dist/
 npm run preview    # serves the production build
+npm test           # unit tests (auto-tracking logic)
 ```
 
 You need Node 20 or newer. There are **no environment variables** and **no backend**.
@@ -59,6 +60,21 @@ Each visitor's data stays in their own browser, so a public URL doesn't expose y
 | **Reminders** | A notification center for upcoming deadlines (projects and milestones), overdue tasks, idle projects, today's tasks and a daily wrap-up reminder at a time you set. Browser notifications work after you grant permission. |
 | **Settings** | Display name, role, timezone (default **Africa/Lagos**), week start, theme (dark/light/system), reminder time, per-type notification toggles and thresholds, report style, and backup/import/erase. |
 | **Command palette** | **Ctrl/⌘ + K**: jump to any page, project or task, and run quick actions. Press **N** for a new task. |
+
+### Automatic tracking (GitHub)
+
+The hub can log your coding work for you. Connect GitHub in **Settings → Automatic tracking**: enter your username, and optionally a read-only token for private repos.
+
+1. **Sync.** The hub reads your commits and pull requests, read-only, straight from the GitHub API. It syncs when you open the hub, every 30 minutes while it's open, and when you press *Sync now*. The first sync covers the last 14 days, so days you didn't open the hub are still picked up.
+2. **Map to projects.** Each repo is matched to a project through that project's *GitHub repository* field. Repos you push to that aren't linked yet show up with a one-click *Link to project*.
+3. **Suggest.** For each project and day, the **Detected work** panel (Work Log page and Daily Reports) builds a ready-made log entry:
+   - what you worked on, taken from your cleaned-up commit messages
+   - what was completed, including merged pull requests
+   - what's pending, i.e. pull requests still open
+   - an **estimated time**: commits less than 2h apart count as one session, and 30 minutes is credited per session before its first commit. Both values are configurable.
+4. **You decide.** For each suggestion you can *Accept*, *Edit & save* or *Dismiss*, and every choice can be undone. When a commit looks like it finished an open task, the hub offers *Mark done*, but it never completes a task on its own.
+
+Only commits authored by you count: matched by your GitHub login, or by extra commit emails you list. Merge commits are skipped. The token is stored only in this browser, is sent only to `api.github.com`, and is never written into backups.
 
 ### Rules the app follows
 

@@ -81,6 +81,20 @@ export const settingsInput = z.object({
   summaryStyle: z.enum(["concise", "detailed"]),
   summaryIncludeStats: z.boolean(),
   weekStartsOn: z.union([z.literal(0), z.literal(1)]),
+  githubUsername: z
+    .string()
+    .trim()
+    .regex(/^$|^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i, "That isn't a valid GitHub username"),
+  githubToken: z
+    .string()
+    .trim()
+    .max(255)
+    .regex(/^$|^[\w-]+$/, "Token contains invalid characters"),
+  githubEmails: z.array(z.string().trim().email("One of the commit emails is invalid")).max(10),
+  autoTrackEnabled: z.boolean(),
+  repoLinks: z.record(z.string(), z.string()),
+  sessionGapMinutes: z.number().int().min(15).max(480),
+  sessionLeadMinutes: z.number().int().min(0).max(120),
 });
 
 /** First human-readable message from a ZodError. */

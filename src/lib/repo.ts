@@ -229,10 +229,10 @@ export async function deleteTask(id: string) {
 /*                                  Work logs                                 */
 /* -------------------------------------------------------------------------- */
 
-export async function createWorkLog(input: WorkLogInput): Promise<WorkLog> {
+export async function createWorkLog(input: WorkLogInput, source: WorkLog["source"] = "manual"): Promise<WorkLog> {
   const data = workLogInput.parse(input);
   const now = nowISO();
-  const log: WorkLog = { id: uid(), ...data, createdAt: now, updatedAt: now };
+  const log: WorkLog = { id: uid(), ...data, source, createdAt: now, updatedAt: now };
   await db.workLogs.add(log);
   await touchProject(log.projectId);
   if (log.projectId) await updateSettings({ lastProjectId: log.projectId }).catch(() => undefined);
@@ -343,4 +343,63 @@ export async function loadDataset() {
     db.milestones.toArray(),
   ]);
   return { projects, tasks, logs, milestones };
+}
+
+/* -------------------------------------------------------------------------- */
+/*                         Auto-tracking: suggestions                         */
+/* -------------------------------------------------------------------------- */
+
+/** Accepting a suggestion is an explicit user action: it creates a normal, editable work log. */
+export async function acceptDraft(
+  draft: { key: string; date: string; project: { id: string } | null; workedOn: string; completed: string; pending: string; minutes: number },
+  overrides: Partial<WorkLogInput> = {},
+): Promise<WorkLog> {
+  const log = await createWorkLog(
+    {
+      date: draft.date,
+      projectId: draft.project?.id ?? null,
+      workedOn: draft.workedOn,
+      completed: draft.completed,
+      challenges: "",
+      pending: draft.pending,
+      nextSteps: "",
+      minutes: draft.minutes,
+      ...overrides,
+    },
+    "github",
+  );
+  await db.draftDecisions.put({ id: draft.key, status: "accepted", logId: log.id, decidedAt: nowISO() });
+  return log;
+}
+
+/** Marks a suggestion as handled (e.g. after "Edit & save" through the log dialog). */
+export async function markDraftAccepted(key: string, logId: string) {
+  await db.draftDecisions.put({ id: key, status: "accepted", logId, decidedAt: nowISO() });
+}
+
+export async function dismissDraft(key: string) {
+  await db.draftDecisions.put({ id: key, status: "dismissed", logId: null, decidedAt: nowISO() });
+}
+
+/** Undo: brings a dismissed suggestion back, or removes the log an accepted one created. */
+export async function undoDraftDecision(key: string) {
+  const d = await db.draftDecisions.get(key);
+  if (d?.logId) await db.workLogs.delete(d.logId);
+  await db.draftDecisions.delete(key);
+}
+
+export async function linkRepo(repo: string, projectId: string | null) {
+  const s = await ensureSettings();
+  const links = { ...s.repoLinks };
+  if (projectId) links[repo.toLowerCase()] = projectId;
+  else delete links[repo.toLowerCase()];
+  await updateSettings({ repoLinks: links });
+}
+
+export async function clearTrackedData() {
+  await db.transaction("rw", [db.trackedEvents, db.draftDecisions, db.settings], async () => {
+    await db.trackedEvents.clear();
+    await db.draftDecisions.clear();
+  });
+  await updateSettings({ lastSync: null });
 }

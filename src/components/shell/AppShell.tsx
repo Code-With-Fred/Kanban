@@ -14,6 +14,28 @@ import { Sidebar } from "./Sidebar";
 import { NotificationCenter } from "./NotificationCenter";
 import { CommandPalette } from "./CommandPalette";
 import { db } from "@/lib/db";
+import { syncDue, syncGitHub } from "@/lib/tracking/github";
+
+/** Pulls GitHub activity on open and every 30 minutes while a tab is open. Silent on failure (shown in Settings). */
+function useAutoTracking() {
+  const settings = useSettings();
+  const ref = useRef(settings);
+  ref.current = settings;
+  useEffect(() => {
+    const tick = () => {
+      if (syncDue(ref.current, 30) && navigator.onLine) syncGitHub().catch(() => undefined);
+    };
+    const first = setTimeout(tick, 1500);
+    const interval = setInterval(tick, 5 * 60_000);
+    const onFocus = () => tick();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearTimeout(first);
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [settings.githubUsername, settings.autoTrackEnabled]);
+}
 
 /** Keeps <html class="dark"> in sync with the theme preference. */
 function useThemeSync(theme: string) {
@@ -81,6 +103,7 @@ export function AppShell() {
 
   useThemeSync(settings.theme);
   useReminderEngine();
+  useAutoTracking();
 
   useEffect(() => {
     ensureSettings();
