@@ -40,7 +40,7 @@ All data lives in the browser's **IndexedDB** (through Dexie). It persists acros
 
 The build output in `dist/` is a static SPA. You can host it anywhere: Vercel, Netlify, Cloudflare Pages or Nginx. Configure an SPA fallback so every route serves `index.html`:
 
-- **Vercel:** add a `vercel.json` with `{ "rewrites": [{ "source": "/(.*)", "destination": "/" }] }`.
+- **Vercel:** already configured by the included `vercel.json` (SPA rewrites, asset caching, security headers).
 - **Netlify:** add a `public/_redirects` file containing `/* /index.html 200`.
 
 Each visitor's data stays in their own browser, so a public URL doesn't expose your data. If you want the URL itself to be private, use your host's access protection (for example, Vercel Deployment Protection).
