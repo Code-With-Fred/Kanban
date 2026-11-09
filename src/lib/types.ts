@@ -70,6 +70,8 @@ export interface WorkLog {
   minutes: number;
   pending: string;
   nextSteps: string;
+  /** "github" when created from an auto-detected suggestion. */
+  source?: "manual" | "github";
   createdAt: ISOTimestamp;
   updatedAt: ISOTimestamp;
 }
@@ -142,6 +144,45 @@ export interface AppNotification {
   createdAt: ISOTimestamp;
 }
 
+/* ------------------------------ Auto-tracking ----------------------------- */
+
+export type TrackedKind = "commit" | "pr_opened" | "pr_merged";
+
+/** A piece of work detected automatically from an external source (GitHub). */
+export interface TrackedEvent {
+  /** Stable id, e.g. `gh:commit:<sha>` — re-syncing never duplicates. */
+  id: string;
+  source: "github";
+  kind: TrackedKind;
+  /** `owner/name`, lower-cased. Mapped to a project at read time. */
+  repo: string;
+  title: string;
+  body: string;
+  url: string;
+  occurredAt: ISOTimestamp;
+  number?: number;
+}
+
+/** What you decided about a suggested log for one project on one day. */
+export interface DraftDecision {
+  /** `${date}|${projectKey}` */
+  id: string;
+  status: "accepted" | "dismissed";
+  logId: string | null;
+  decidedAt: ISOTimestamp;
+}
+
+export interface SyncStatus {
+  ok: boolean;
+  at: ISOTimestamp;
+  newEvents: number;
+  reposScanned: number;
+  rateRemaining: number | null;
+  error?: string;
+  /** Start of the sync window is derived from this, so failures never skip data. */
+  lastSuccessAt: ISOTimestamp | null;
+}
+
 export type ThemePref = "dark" | "light" | "system";
 export type SummaryStyle = "concise" | "detailed";
 
@@ -164,5 +205,19 @@ export interface Settings {
   summaryIncludeStats: boolean;
   weekStartsOn: 0 | 1;
   lastProjectId: string | null;
+  /* Auto-tracking (GitHub) */
+  githubUsername: string;
+  /** Optional read-only token, stored only in this browser. Needed for private repos. */
+  githubToken: string;
+  /** Extra commit emails that count as you (for commits not linked to your account). */
+  githubEmails: string[];
+  autoTrackEnabled: boolean;
+  /** Explicit `owner/repo` → projectId links (in addition to each project's repo URL). */
+  repoLinks: Record<string, string>;
+  /** Commits further apart than this start a new work session. */
+  sessionGapMinutes: number;
+  /** Time credited before the first commit of a session (setup, reading, thinking). */
+  sessionLeadMinutes: number;
+  lastSync: SyncStatus | null;
   updatedAt: ISOTimestamp;
 }

@@ -11,6 +11,7 @@ import { PageLoader } from "@/components/common/PageLoader";
 import { ProjectSelect } from "@/components/common/project-select";
 import { SummaryPanel } from "@/components/reports/SummaryPanel";
 import { ReportHistory } from "@/components/reports/ReportHistory";
+import { DetectedWork } from "@/components/tracking/DetectedWork";
 import { useDataset, useSettings, useToday } from "@/hooks/data";
 import { addDays, fmtLong } from "@/lib/dates";
 import { completedOn, rankFocus } from "@/lib/insights";
@@ -178,6 +179,8 @@ export default function DailyReports() {
           <Input type="date" value={date} max={today} onChange={(e) => changeDate(e.target.value || today)} className="w-40" aria-label="Report date" />
         }
       />
+
+      <DetectedWork date={date} compact />
 
       <div className="grid gap-4 lg:grid-cols-5">
         {/* Conversational check-in */}

@@ -26,7 +26,7 @@ import { PriorityBadge } from "@/components/common/badges";
 import { PageLoader } from "@/components/common/PageLoader";
 import { ProductivityChart } from "@/components/charts/ProductivityChart";
 import { TaskRow, toggleDone } from "@/components/tasks/TaskRow";
-import { useActivities, useDataset, useSettings, useToday } from "@/hooks/data";
+import { useActivities, useDataset, useDrafts, useSettings, useToday } from "@/hooks/data";
 import { addDays, fmtLong, fmtShort, greeting, relativeDay, timeAgo } from "@/lib/dates";
 import { completedOn, dailySeries, isOverdue, projectCounts, rankFocus, upcomingDeadlines } from "@/lib/insights";
 import type { ActivityType } from "@/lib/types";
@@ -48,6 +48,15 @@ export default function Overview() {
   const activities = useActivities(10);
   const { openLog, openTask, openProject } = useUI();
   const navigate = useNavigate();
+  const todayRange = useMemo(() => ({ from: today, to: today }), [today]);
+  const drafts = useDrafts(todayRange);
+  const detected = drafts && settings.githubUsername
+    ? {
+        minutes: drafts.reduce((s, d) => s + d.minutes, 0),
+        commits: drafts.reduce((s, d) => s + d.commits.length, 0),
+        pending: drafts.filter((d) => !d.decision).length,
+      }
+    : null;
 
   const view = useMemo(() => {
     if (!data) return null;
@@ -118,7 +127,14 @@ export default function Overview() {
             <span className="text-muted-foreground">
               This week: <span className="font-medium text-foreground">{fmtMinutes(view.weekMinutes)}</span> · {pluralize(view.weekDone, "task")}
             </span>
-            {view.todayLogs.length === 0 && (
+            {detected && detected.commits > 0 && (
+              <Link to="/work-log" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground">
+                <Sparkles className="size-3.5 text-brand" /> GitHub today: <span className="font-medium text-foreground">≈ {fmtMinutes(detected.minutes)}</span> ·{" "}
+                {pluralize(detected.commits, "commit")}
+                {detected.pending > 0 && <span className="rounded bg-brand/15 px-1.5 text-[11px] font-semibold text-brand">{detected.pending} to review</span>}
+              </Link>
+            )}
+            {view.todayLogs.length === 0 && !detected?.pending && (
               <button onClick={() => openLog()} className="inline-flex items-center gap-1.5 text-amber-600 hover:underline dark:text-amber-300">
                 <span className="size-1.5 rounded-full bg-amber-400" /> Nothing logged yet today
               </button>

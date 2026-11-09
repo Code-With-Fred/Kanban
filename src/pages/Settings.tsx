@@ -16,6 +16,8 @@ import { browserNotificationsSupported, requestBrowserPermission, showBrowserNot
 import { exportBackup, importBackup, requestPersistentStorage, storageEstimate, wipeAllData } from "@/lib/backup";
 import type { Settings } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { TrackingSettings } from "@/components/tracking/TrackingSettings";
+import { useLocation } from "react-router-dom";
 
 function Row({ title, desc, children }: { title: string; desc?: string; children: React.ReactNode }) {
   return (
@@ -49,6 +51,11 @@ export default function SettingsPage() {
     storageEstimate().then(setStorage);
   }, []);
 
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (hash) setTimeout(() => document.querySelector(hash)?.scrollIntoView({ behavior: "smooth", block: "start" }), 250);
+  }, [hash]);
+
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => {
     setF((s) => ({ ...s, [k]: v }));
     setDirty(true);
@@ -67,8 +74,13 @@ export default function SettingsPage() {
   const save = async () => {
     setSaving(true);
     try {
-      const { id: _id, updatedAt: _u, lastProjectId: _l, ...rest } = f;
-      await updateSettings(rest);
+      // Only the fields this form owns — tracking settings are saved by their own card.
+      const keys = [
+        "displayName", "role", "timezone", "weekStartsOn", "theme", "reminderEnabled", "reminderTime",
+        "browserNotifications", "notifyDeadlines", "notifyOverdue", "notifyStale", "notifyToday",
+        "deadlineWindowDays", "staleAfterDays", "summaryStyle", "summaryIncludeStats",
+      ] as const;
+      await updateSettings(Object.fromEntries(keys.map((k) => [k, f[k]])) as Partial<Settings>);
       setDirty(false);
       toast.success("Settings saved");
     } catch (e) {
@@ -126,6 +138,8 @@ export default function SettingsPage() {
             </Field>
           </CardContent>
         </Card>
+
+        <TrackingSettings />
 
         <Card>
           <CardHeader>

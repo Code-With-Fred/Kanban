@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { AlertTriangle, ArrowRight, CheckCircle2, CircleDashed, Clock, Copy, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, CircleDashed, Clock, Copy, FolderGit2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown";
@@ -70,6 +70,11 @@ export function WorkLogItem({
               <Clock className="size-3" /> {fmtMinutes(log.minutes)}
             </span>
             {showDate && <span>{relativeDay(log.date, today)}</span>}
+            {log.source === "github" && (
+              <span className="inline-flex items-center gap-1 rounded bg-accent px-1.5 py-0.5 text-[10px] font-medium" title="Created from detected GitHub activity">
+                <FolderGit2 className="size-3" /> Auto
+              </span>
+            )}
             <span className="text-muted-foreground/70">{fmtTime(log.createdAt, tz)}</span>
           </div>
           <p className="whitespace-pre-line text-sm leading-relaxed">{log.workedOn}</p>

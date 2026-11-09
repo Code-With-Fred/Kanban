@@ -137,12 +137,17 @@ export function WorkLogFormDialog({
   log,
   initial,
   projects,
+  onCreated,
+  title,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   log?: WorkLog | null;
   initial: WorkLogDraft;
   projects: Project[];
+  /** Called with the new log after a successful create. */
+  onCreated?: (log: WorkLog) => void | Promise<void>;
+  title?: string;
 }) {
   const [draft, setDraftState] = useState<WorkLogDraft>(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -158,7 +163,7 @@ export function WorkLogFormDialog({
       setExpanded(!!(log.completed || log.challenges || log.pending || log.nextSteps));
     } else {
       setDraftState(initial);
-      setExpanded(false);
+      setExpanded(!!(initial.completed || initial.pending || initial.challenges || initial.nextSteps));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, log]);
@@ -171,7 +176,8 @@ export function WorkLogFormDialog({
         await updateWorkLog(log.id, draft);
         toast.success("Log updated");
       } else {
-        await createWorkLog(draft);
+        const created = await createWorkLog(draft, onCreated ? "github" : "manual");
+        await onCreated?.(created);
         toast.success(`Logged ${fmtMinutes(draft.minutes)}`, { description: draft.workedOn.slice(0, 80) });
       }
       onOpenChange(false);
@@ -197,7 +203,7 @@ export function WorkLogFormDialog({
         >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Zap className="size-4 text-brand" /> {log ? "Edit work log" : "Quick log"}
+              <Zap className="size-4 text-brand" /> {title ?? (log ? "Edit work log" : "Quick log")}
             </DialogTitle>
             <DialogDescription>{log ? "Update this entry." : "Project, one line, a time chip — done. Ctrl + Enter saves."}</DialogDescription>
           </DialogHeader>

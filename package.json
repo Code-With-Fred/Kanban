@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "CodewithFred Project Hub — Every project. Every milestone. Every day. Under control.",
+  "description": "CodewithFred Project Hub \u2014 Every project. Every milestone. Every day. Under control.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b",
+    "test": "vitest run"
   },
   "engines": {
     "node": ">=20"
@@ -51,6 +52,7 @@
     "tailwindcss": "^3.4.19",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.9.3",
-    "vite": "^6.4.6"
+    "vite": "^6.4.6",
+    "vitest": "^3.2.7"
   }
 }

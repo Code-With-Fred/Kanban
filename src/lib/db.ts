@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from "dexie";
-import type { Activity, AppNotification, Milestone, Project, Report, Settings, Task, WorkLog } from "./types";
+import type { Activity, AppNotification, DraftDecision, Milestone, Project, Report, Settings, Task, TrackedEvent, WorkLog } from "./types";
 
 /**
  * Local-first persistence. Everything lives in this browser's IndexedDB, so data
@@ -14,6 +14,8 @@ export class HubDB extends Dexie {
   activities!: EntityTable<Activity, "id">;
   notifications!: EntityTable<AppNotification, "id">;
   settings!: EntityTable<Settings, "id">;
+  trackedEvents!: EntityTable<TrackedEvent, "id">;
+  draftDecisions!: EntityTable<DraftDecision, "id">;
 
   constructor() {
     super("codewithfred-hub");
@@ -26,6 +28,11 @@ export class HubDB extends Dexie {
       activities: "id, createdAt, projectId",
       notifications: "id, &dedupeKey, createdAt, readAt",
       settings: "id",
+    });
+    // v2: automatic work tracking (GitHub activity + decisions on suggested logs).
+    this.version(2).stores({
+      trackedEvents: "id, occurredAt, repo, kind",
+      draftDecisions: "id",
     });
   }
 }
@@ -41,5 +48,7 @@ export const TABLES = [
   "activities",
   "notifications",
   "settings",
+  "trackedEvents",
+  "draftDecisions",
 ] as const;
 export type TableName = (typeof TABLES)[number];

@@ -61,6 +61,14 @@ export const DEFAULT_SETTINGS: Settings = {
   summaryIncludeStats: true,
   weekStartsOn: 1,
   lastProjectId: null,
+  githubUsername: "",
+  githubToken: "",
+  githubEmails: [],
+  autoTrackEnabled: true,
+  repoLinks: {},
+  sessionGapMinutes: 120,
+  sessionLeadMinutes: 30,
+  lastSync: null,
   updatedAt: new Date(0).toISOString(),
 };
 

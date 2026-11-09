@@ -1,5 +1,6 @@
 import { useLiveQuery } from "dexie-react-hooks";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { buildDrafts } from "@/lib/tracking/drafts";
 import { db } from "@/lib/db";
 import { DEFAULT_SETTINGS } from "@/lib/constants";
 import { todayIn } from "@/lib/dates";
@@ -45,4 +46,23 @@ export function useDataset() {
     ready,
     data: ready ? { projects: projects!, tasks: tasks!, logs: logs!, milestones: milestones! } : null,
   };
+}
+
+/* ------------------------------ Auto-tracking ----------------------------- */
+
+export const useTrackedEvents = () => useLiveQuery(() => db.trackedEvents.orderBy("occurredAt").reverse().toArray(), []);
+export const useDraftDecisions = () => useLiveQuery(() => db.draftDecisions.toArray(), []);
+
+/** Suggested logs from detected activity, live. `undefined` while loading. */
+export function useDrafts(range?: { from?: string; to?: string }) {
+  const settings = useSettings();
+  const events = useTrackedEvents();
+  const decisions = useDraftDecisions();
+  const projects = useProjects();
+  const tasks = useTasks();
+  return useMemo(() => {
+    if (!events || !decisions || !projects || !tasks) return undefined;
+    return buildDrafts({ events, projects, tasks, decisions, settings, from: range?.from, to: range?.to });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events, decisions, projects, tasks, settings.timezone, settings.repoLinks, settings.sessionGapMinutes, settings.sessionLeadMinutes, range?.from, range?.to]);
 }

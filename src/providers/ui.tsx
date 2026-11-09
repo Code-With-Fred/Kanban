@@ -9,7 +9,7 @@ import type { Project, Task, WorkLog } from "@/lib/types";
 interface UIContextValue {
   openProject: (project?: Project | null, opts?: { navigateOnCreate?: boolean }) => void;
   openTask: (task?: Task | null, defaults?: TaskDefaults) => void;
-  openLog: (log?: WorkLog | null, prefill?: Partial<WorkLogDraft>) => void;
+  openLog: (log?: WorkLog | null, prefill?: Partial<WorkLogDraft>, opts?: { onCreated?: (log: WorkLog) => void | Promise<void>; title?: string }) => void;
   commandOpen: boolean;
   setCommandOpen: (o: boolean) => void;
 }
@@ -30,7 +30,13 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
 
   const [project, setProject] = useState<{ open: boolean; project: Project | null; nav: boolean }>({ open: false, project: null, nav: false });
   const [task, setTask] = useState<{ open: boolean; task: Task | null; defaults?: TaskDefaults }>({ open: false, task: null });
-  const [log, setLog] = useState<{ open: boolean; log: WorkLog | null; initial: WorkLogDraft }>({
+  const [log, setLog] = useState<{
+    open: boolean;
+    log: WorkLog | null;
+    initial: WorkLogDraft;
+    onCreated?: (log: WorkLog) => void | Promise<void>;
+    title?: string;
+  }>({
     open: false,
     log: null,
     initial: emptyDraft(today, null),
@@ -42,10 +48,10 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   }, []);
   const openTask = useCallback((t?: Task | null, defaults?: TaskDefaults) => setTask({ open: true, task: t ?? null, defaults }), []);
   const openLog = useCallback(
-    (l?: WorkLog | null, prefill?: Partial<WorkLogDraft>) => {
+    (l?: WorkLog | null, prefill?: Partial<WorkLogDraft>, opts?: { onCreated?: (log: WorkLog) => void | Promise<void>; title?: string }) => {
       // Default to the last project I logged against — one less click every time.
       const lastProject = settings.lastProjectId && projects.some((p) => p.id === settings.lastProjectId && p.status !== "archived") ? settings.lastProjectId : null;
-      setLog({ open: true, log: l ?? null, initial: { ...emptyDraft(today, lastProject), ...prefill } });
+      setLog({ open: true, log: l ?? null, initial: { ...emptyDraft(today, lastProject), ...prefill }, onCreated: opts?.onCreated, title: opts?.title });
     },
     [settings.lastProjectId, projects, today],
   );
@@ -65,7 +71,15 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
         }}
       />
       <TaskFormDialog open={task.open} onOpenChange={(o) => setTask((s) => ({ ...s, open: o }))} task={task.task} defaults={task.defaults} projects={projects} />
-      <WorkLogFormDialog open={log.open} onOpenChange={(o) => setLog((s) => ({ ...s, open: o }))} log={log.log} initial={log.initial} projects={projects} />
+      <WorkLogFormDialog
+        open={log.open}
+        onOpenChange={(o) => setLog((s) => ({ ...s, open: o }))}
+        log={log.log}
+        initial={log.initial}
+        projects={projects}
+        onCreated={log.onCreated}
+        title={log.title}
+      />
     </UIContext.Provider>
   );
 }
